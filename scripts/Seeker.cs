@@ -1,9 +1,7 @@
+using System.Linq;
 using Godot;
 using SharpSteer2;
 using SharpSteer2.Helpers;
-using SharpSteer2.Obstacles;
-using System.Linq;
-using System.Collections.Generic;
 
 public enum SeekerState
 {
@@ -33,13 +31,18 @@ public partial class Seeker : Node3D
     readonly bool arrive;
     double lastRunningTime; // for auto-reset
 
+    float baseRadius = 1.5f;
+    ObstacleSpawner obstacleSpawner;
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
+        obstacleSpawner = GetNode<ObstacleSpawner>("%ObstacleSpawner");
+
+
         vehicle = new();
         Reset();
         vehicle.Position = Position.ToNumerics();
-        InitializeObstacles(0.5f, 100);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -61,8 +64,6 @@ public partial class Seeker : Node3D
 
         vehicle.ApplySteeringForce(steer.ToNumerics(), ((float)delta));
         Position = vehicle.Position.ToGodot();
-
-        GD.Print("State ", State, Position);
     }
 
     public void Reset()
@@ -102,7 +103,9 @@ public partial class Seeker : Node3D
         // determine if obstacle avodiance is needed
         var clearPath = IsPathToGoalClear();
         AdjustObstacleAvoidanceLookAhead(clearPath);
-        var obstacleAvoidance = vehicle.SteerToAvoidObstacles(Globals.AvoidancePredictTime, AllObstacles).ToGodot();
+        var sphericalObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
+        GD.Print("obstacles ", sphericalObstacles.Count());
+        var obstacleAvoidance = vehicle.SteerToAvoidObstacles(Globals.AvoidancePredictTime, sphericalObstacles).ToGodot();
 
         // saved for annotation
         avoiding = obstacleAvoidance != Vector3.Zero;
@@ -256,71 +259,4 @@ public partial class Seeker : Node3D
         ClearPathAnnotation(sideThreshold, behindThreshold, goalDirection);
         return xxxReturn;
     }
-
-    // move to scene begin
-    float baseRadius = 1.5f;
-    public static readonly List<SphericalObstacle> AllObstacles = new();
-    protected static int obstacleCount = -1;
-
-    // dynamic obstacle registry
-    public static void InitializeObstacles(float radius, int obstacles)
-    {
-        // start with 40% of possible obstacles
-        if (obstacleCount == -1)
-        {
-            obstacleCount = 0;
-            for (var i = 0; i < obstacles; i++)
-                AddOneObstacle(radius);
-        }
-    }
-
-    public static void AddOneObstacle(float radius)
-    {
-        // pick a random center and radius,
-        // loop until no overlap with other obstacles and the home base
-        float r;
-        Vector3 c;
-        float minClearance;
-        // todo use player radius
-        var requiredClearance = 0.5f * 4; // 2 x diameter
-        do
-        {
-            r = RandomHelpers.Random(1.5f, 4);
-            c = Vector3Helpers.RandomVectorOnUnitRadiusXZDisk().ToGodot() * Globals.MaxStartRadius * 1.1f;
-            minClearance = AllObstacles.Aggregate(float.MaxValue, (current, t) => TestOneObstacleOverlap(current, r, t.Radius, c, t.Center.ToGodot()));
-
-            minClearance = TestOneObstacleOverlap(minClearance, r, radius - requiredClearance, c, Globals.HomeBaseCenter);
-        }
-        while (minClearance < requiredClearance);
-
-        // add new non-overlapping obstacle to registry
-        AllObstacles.Add(new(r, c.ToNumerics()));
-        obstacleCount++;
-    }
-
-    public static void RemoveOneObstacle()
-    {
-        if (obstacleCount <= 0)
-            return;
-
-        obstacleCount--;
-        AllObstacles.RemoveAt(obstacleCount);
-    }
-
-    static float MinDistanceToObstacle(Vector3 point)
-    {
-        const float r = 0;
-        var c = point;
-        return AllObstacles.Aggregate(float.MaxValue, (current, t) => TestOneObstacleOverlap(current, r, t.Radius, c, t.Center.ToGodot()));
-    }
-
-    static float TestOneObstacleOverlap(float minClearance, float r, float radius, Vector3 c, Vector3 center)
-    {
-        var d = c.DistanceTo(center);
-        var clearance = d - (r + radius);
-        if (minClearance > clearance) minClearance = clearance;
-        return minClearance;
-    }
-    // move to scene end
-
 }

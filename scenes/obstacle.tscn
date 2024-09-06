@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://dmgrv0fl6k005"]
+
+[ext_resource type="Script" path="res://scripts/Obstacle.cs" id="1_jr1ue"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_nrj4h"]
+height = 0.1
+
+[node name="Obstacle" type="Node3D" groups=["obstacle"]]
+script = ExtResource("1_jr1ue")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_nrj4h")

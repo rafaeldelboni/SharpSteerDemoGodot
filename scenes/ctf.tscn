@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://cx4rny3qjk7u0"]
+[gd_scene load_steps=4 format=3 uid="uid://cx4rny3qjk7u0"]
 
 [ext_resource type="PackedScene" uid="uid://d3kuvk88vismj" path="res://scenes/seeker.tscn" id="1_1e4d1"]
+[ext_resource type="Script" path="res://scripts/ObstacleSpawner.cs" id="2_4mgtw"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_hu7vc"]
 
@@ -17,3 +18,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("SphereMesh_hu7vc")
+
+[node name="ObstacleSpawner" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_4mgtw")
