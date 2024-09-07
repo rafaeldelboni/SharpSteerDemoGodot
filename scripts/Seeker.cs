@@ -104,7 +104,6 @@ public partial class Seeker : Node3D
         var clearPath = IsPathToGoalClear();
         AdjustObstacleAvoidanceLookAhead(clearPath);
         var sphericalObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
-        GD.Print("obstacles ", sphericalObstacles.Count());
         var obstacleAvoidance = vehicle.SteerToAvoidObstacles(Globals.AvoidancePredictTime, sphericalObstacles).ToGodot();
 
         // saved for annotation
