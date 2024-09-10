@@ -1,8 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://dmgrv0fl6k005"]
+[gd_scene load_steps=4 format=3 uid="uid://dmgrv0fl6k005"]
 
 [ext_resource type="Script" path="res://scripts/Obstacle.cs" id="1_jr1ue"]
+[ext_resource type="Material" uid="uid://marn3uxpa3no" path="res://assets/material/obstacle_material.tres" id="2_ndt6w"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_nrj4h"]
+material = ExtResource("2_ndt6w")
 height = 0.1
 
 [node name="Obstacle" type="Node3D" groups=["obstacle"]]

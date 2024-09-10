@@ -1,13 +1,22 @@
-[gd_scene load_steps=5 format=3 uid="uid://cx4rny3qjk7u0"]
+[gd_scene load_steps=8 format=3 uid="uid://cx4rny3qjk7u0"]
 
 [ext_resource type="PackedScene" uid="uid://d3kuvk88vismj" path="res://scenes/seeker.tscn" id="1_1e4d1"]
 [ext_resource type="Script" path="res://scripts/ObstacleSpawner.cs" id="2_4mgtw"]
+[ext_resource type="Texture2D" uid="uid://vn5xnuqswxan" path="res://assets/texture/Dark/texture_05.png" id="3_5xn15"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kgkhi"]
 albedo_color = Color(0.0804965, 0.650192, 0, 1)
 
 [sub_resource type="SphereMesh" id="SphereMesh_hu7vc"]
 material = SubResource("StandardMaterial3D_kgkhi")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tuk5b"]
+albedo_texture = ExtResource("3_5xn15")
+uv1_triplanar = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_eq4go"]
+material = SubResource("StandardMaterial3D_tuk5b")
+size = Vector2(100, 100)
 
 [node name="Ctf" type="Node3D"]
 
@@ -19,10 +28,25 @@ transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 
 
 [node name="SpotLight3D" type="SpotLight3D" parent="Seeker/Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, -9.89949, -25.4558)
-
-[node name="Target" type="MeshInstance3D" parent="."]
-mesh = SubResource("SphereMesh_hu7vc")
+light_energy = 5.0
+spot_range = 50.0
 
 [node name="ObstacleSpawner" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("2_4mgtw")
+
+[node name="Map" type="Node" parent="."]
+
+[node name="Target" type="MeshInstance3D" parent="Map"]
+mesh = SubResource("SphereMesh_hu7vc")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = SubResource("PlaneMesh_eq4go")
+skeleton = NodePath("../Target")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+light_energy = 5.0
+omni_range = 500.0
