@@ -64,6 +64,7 @@ public partial class Seeker : Node3D
 
         vehicle.ApplySteeringForce(steer.ToNumerics(), ((float)delta));
         Position = vehicle.Position.ToGodot();
+        Rotation = new(0, Mathf.Lerp(Rotation.Y, Mathf.Atan2(-vehicle.Velocity.X, -vehicle.Velocity.Z), weight: 0.25f), 0);
     }
 
     public void Reset()

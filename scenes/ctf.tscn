@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/ObstacleSpawner.cs" id="2_4mgtw"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kgkhi"]
-albedo_color = Color(1, 0.0313726, 0, 1)
+albedo_color = Color(0.0804965, 0.650192, 0, 1)
 
 [sub_resource type="SphereMesh" id="SphereMesh_hu7vc"]
 material = SubResource("StandardMaterial3D_kgkhi")
@@ -17,8 +17,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 40)
 [node name="Camera3D" type="Camera3D" parent="Seeker"]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 25, 15)
 
-[node name="SpotLight3D" type="SpotLight3D" parent="Seeker"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+[node name="SpotLight3D" type="SpotLight3D" parent="Seeker/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, -9.89949, -25.4558)
 
 [node name="Target" type="MeshInstance3D" parent="."]
 mesh = SubResource("SphereMesh_hu7vc")
