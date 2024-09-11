@@ -1,11 +1,29 @@
-[gd_scene load_steps=8 format=3 uid="uid://cx4rny3qjk7u0"]
+[gd_scene load_steps=13 format=3 uid="uid://cx4rny3qjk7u0"]
 
 [ext_resource type="PackedScene" uid="uid://d3kuvk88vismj" path="res://scenes/seeker.tscn" id="1_1e4d1"]
 [ext_resource type="Script" path="res://scripts/ObstacleSpawner.cs" id="2_4mgtw"]
+[ext_resource type="Script" path="res://scripts/EnemySpawner.cs" id="2_j7r1q"]
 [ext_resource type="Texture2D" uid="uid://vn5xnuqswxan" path="res://assets/texture/Dark/texture_05.png" id="3_5xn15"]
+[ext_resource type="Texture2D" uid="uid://b1moqjcvkhcgg" path="res://assets/texture/Green/texture_10.png" id="3_tjouf"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1agcr"]
+
+[sub_resource type="Sky" id="Sky_shulq"]
+sky_material = SubResource("ProceduralSkyMaterial_1agcr")
+
+[sub_resource type="Environment" id="Environment_2hxkt"]
+background_mode = 2
+sky = SubResource("Sky_shulq")
+ambient_light_color = Color(0.894922, 0.894922, 0.894922, 1)
+ambient_light_energy = 5.0
+reflected_light_source = 2
+tonemap_exposure = 1.5
+adjustment_enabled = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kgkhi"]
 albedo_color = Color(0.0804965, 0.650192, 0, 1)
+albedo_texture = ExtResource("3_tjouf")
+uv1_triplanar = true
 
 [sub_resource type="SphereMesh" id="SphereMesh_hu7vc"]
 material = SubResource("StandardMaterial3D_kgkhi")
@@ -20,28 +38,20 @@ size = Vector2(100, 100)
 
 [node name="Ctf" type="Node3D"]
 
-[node name="Seeker" parent="." instance=ExtResource("1_1e4d1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 40)
-
-[node name="Camera3D" type="Camera3D" parent="Seeker"]
-transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 25, 15)
-
-[node name="SpotLight3D" type="SpotLight3D" parent="Seeker/Camera3D"]
-transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, -9.89949, -25.4558)
-light_energy = 5.0
-spot_range = 50.0
-
 [node name="ObstacleSpawner" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("2_4mgtw")
 
 [node name="Map" type="Node" parent="."]
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Map"]
+environment = SubResource("Environment_2hxkt")
+
 [node name="Target" type="MeshInstance3D" parent="Map"]
 mesh = SubResource("SphereMesh_hu7vc")
 skeleton = NodePath("../..")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Map"]
+[node name="Plain" type="MeshInstance3D" parent="Map"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 mesh = SubResource("PlaneMesh_eq4go")
 skeleton = NodePath("../Target")
@@ -50,3 +60,14 @@ skeleton = NodePath("../Target")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 light_energy = 5.0
 omni_range = 500.0
+
+[node name="Seeker" parent="." instance=ExtResource("1_1e4d1")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 40)
+
+[node name="Camera3D" type="Camera3D" parent="Seeker"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 25, 15)
+
+[node name="EnemySpawner" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_j7r1q")

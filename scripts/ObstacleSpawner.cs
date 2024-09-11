@@ -5,6 +5,8 @@ using SharpSteer2.Helpers;
 
 public partial class ObstacleSpawner : Node
 {
+    static int numObstacles = 100;
+
     static PackedScene obstacleScene;
 
     float baseRadius = 1.5f;
@@ -16,8 +18,7 @@ public partial class ObstacleSpawner : Node
     {
         obstacleScene = GD.Load<PackedScene>($"res://scenes/obstacle.tscn");
 
-        allObstacles = new();
-        InitializeObstacles(0.10f, 100);
+        InitializeObstacles(0.10f, numObstacles);
 
         foreach (var obstacles in allObstacles)
             AddChild(obstacles);
@@ -26,6 +27,7 @@ public partial class ObstacleSpawner : Node
     // dynamic obstacle registry
     public void InitializeObstacles(float radius, int obstacles)
     {
+        allObstacles = new();
         // start with 40% of possible obstacles
         if (obstacleCount == -1)
         {
@@ -50,7 +52,7 @@ public partial class ObstacleSpawner : Node
             c = Vector3Helpers.RandomVectorOnUnitRadiusXZDisk().ToGodot() * Globals.MaxStartRadius * 1.1f;
             minClearance = allObstacles.Aggregate(float.MaxValue, (current, t) => TestOneObstacleOverlap(current, r, t.Radius, c, t.Position));
 
-            minClearance = TestOneObstacleOverlap(minClearance, r, radius - requiredClearance, c, Globals.HomeBaseCenter);
+            minClearance = TestOneObstacleOverlap(minClearance, r, radius - requiredClearance, c, Globals.HomeBaseCenter.ToGodot());
         }
         while (minClearance < requiredClearance);
 
@@ -71,14 +73,14 @@ public partial class ObstacleSpawner : Node
         allObstacles.RemoveAt(obstacleCount);
     }
 
-    float MinDistanceToObstacle(Vector3 point)
+    public float MinDistanceToObstacle(Vector3 point)
     {
         const float r = 0;
         var c = point;
         return allObstacles.Aggregate(float.MaxValue, (current, t) => TestOneObstacleOverlap(current, r, t.Radius, c, t.Position));
     }
 
-    float TestOneObstacleOverlap(float minClearance, float r, float radius, Vector3 c, Vector3 center)
+    public float TestOneObstacleOverlap(float minClearance, float r, float radius, Vector3 c, Vector3 center)
     {
         var d = c.DistanceTo(center);
         var clearance = d - (r + radius);

@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3 uid="uid://d4kvp60qlajml"]
+
+[ext_resource type="Texture2D" uid="uid://dnues3mcgkvhv" path="res://assets/texture/Red/texture_10.png" id="1_2hr4m"]
+[ext_resource type="Script" path="res://scripts/Enemy.cs" id="1_sgrt2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e3y5p"]
+albedo_texture = ExtResource("1_2hr4m")
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ne4dh"]
+material = SubResource("StandardMaterial3D_e3y5p")
+top_radius = 0.1
+bottom_radius = 0.1
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ibm2x"]
+albedo_texture = ExtResource("1_2hr4m")
+
+[sub_resource type="SphereMesh" id="SphereMesh_hol42"]
+material = SubResource("StandardMaterial3D_ibm2x")
+
+[node name="Enemy" type="Node3D"]
+script = ExtResource("1_sgrt2")
+
+[node name="MeshFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -0.5)
+mesh = SubResource("CylinderMesh_ne4dh")
+skeleton = NodePath("../MeshBody")
+
+[node name="MeshBody" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_hol42")
