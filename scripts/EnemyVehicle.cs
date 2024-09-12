@@ -1,40 +1,36 @@
-using System.Linq;
-using Vector3 = System.Numerics.Vector3;
-
 public class EnemyVehicle(
     Seeker seeker,
     ObstacleSpawner obstacleSpawner
 ) : Vehicle(obstacleSpawner)
 {
-    readonly SeekerVehicle seeker = seeker.vehicle;
+    readonly SeekerVehicle seeker = seeker.Vehicle;
 
-    public void Update(float elapsedTime)
+    public void Update(double elapsedTime)
     {
         // determine upper bound for pursuit prediction time
-        var seekerToGoalDist = Vector3.Distance(Globals.HomeBaseCenter, seeker.Position);
+        var seekerToGoalDist = NVector3.Distance(Globals.HomeBaseCenter, seeker.Position);
         var adjustedDistance = seekerToGoalDist - Radius - Globals.BaseRadius;
         var seekerToGoalTime = adjustedDistance < 0 ? 0 : adjustedDistance / seeker.Speed;
         var maxPredictionTime = seekerToGoalTime * 0.9f;
 
         // determine steering (pursuit, obstacle avoidance, or braking)
-        var steer = Vector3.Zero;
-        if (seeker.State == SeekerState.Running)
+        var steer = NVector3.Zero;
+        if (seeker.State is SeekerState.Running)
         {
-            var allObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
-            var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, allObstacles);
+            var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, obstacleSpawner.AllObstacles);
 
             // saved for annotation
-            avoiding = avoidance == Vector3.Zero;
+            avoiding = avoidance == NVector3.Zero;
 
             steer = avoiding ? SteerForPursuit(seeker, maxPredictionTime) : avoidance;
         }
         else
-            ApplyBrakingForce(Globals.BrakingRate, elapsedTime);
+            ApplyBrakingForce(Globals.BrakingRate, (float)elapsedTime);
 
-        ApplySteeringForce(steer, elapsedTime);
+        ApplySteeringForce(steer, (float)elapsedTime);
 
         // detect and record interceptions ("tags") of seeker
-        var seekerToMeDist = Vector3.Distance(Position, seeker.Position);
+        var seekerToMeDist = NVector3.Distance(Position, seeker.Position);
         var sumOfRadii = Radius + seeker.Radius;
 
         if (seekerToMeDist >= sumOfRadii)
@@ -47,7 +43,7 @@ public class EnemyVehicle(
                 break;
 
             case SeekerState.Tagged:
-                Godot.GD.Print("Seeker Tagged!");
+                GD.Print("Seeker Tagged!");
                 break;
         }
     }

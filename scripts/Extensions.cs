@@ -1,11 +1,11 @@
-public static partial class Extensions
+public static class Extensions
 {
-    public static System.Numerics.Vector3 ToNumerics(this Godot.Vector3 vector)
+    public static NVector3 ToNumerics(this Vector3 vector)
         => new(vector.X, vector.Y, vector.Z);
 
-    public static Godot.Vector3 ToGodot(this System.Numerics.Vector3 vector)
+    public static Vector3 ToGodot(this NVector3 vector)
         => new(vector.X, vector.Y, vector.Z);
 
-    public static System.Numerics.Vector3 ToNumerics(this Godot.Color color)
+    public static NVector3 ToNumerics(this Color color)
         => new(color.R, color.G, color.B);
 }

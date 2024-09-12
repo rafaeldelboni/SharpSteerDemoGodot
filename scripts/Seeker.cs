@@ -1,8 +1,7 @@
-using Godot;
-
 public partial class Seeker : Node3D
 {
-    public SeekerVehicle vehicle;
+    public SeekerVehicle Vehicle;
+
     ObstacleSpawner obstacleSpawner;
     EnemySpawner enemySpawner;
 
@@ -11,19 +10,20 @@ public partial class Seeker : Node3D
     {
         obstacleSpawner = GetNode<ObstacleSpawner>("%ObstacleSpawner");
         enemySpawner = GetNode<EnemySpawner>("%EnemySpawner");
-        vehicle = new(enemySpawner, obstacleSpawner);
-        vehicle.Reset();
-        vehicle.RandomizeStartingPositionAndHeading();
-        Position = vehicle.Position.ToGodot();
+        Vehicle = new(enemySpawner, obstacleSpawner);
+        Vehicle.Reset();
+        Vehicle.RandomizeStartingPositionAndHeading();
+        Position = Vehicle.Position.ToGodot();
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
         // do behavioral state transitions, as needed
-        vehicle.Update((float)delta, (float)delta);
+        Vehicle.Update((float)delta, (float)delta);
 
-        Position = vehicle.Position.ToGodot();
-        Rotation = new(0, Mathf.Lerp(Rotation.Y, Mathf.Atan2(-vehicle.Velocity.X, -vehicle.Velocity.Z), weight: 0.5f), 0);
+        Position = Vehicle.Position.ToGodot();
+        Rotation = new(0, Mathf.Lerp(Rotation.Y, Mathf.Atan2(-Vehicle.Velocity.X, -Vehicle.Velocity.Z), weight: 0.5f),
+            0);
     }
 }
