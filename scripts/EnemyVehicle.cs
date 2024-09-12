@@ -1,27 +1,27 @@
 using SharpSteer2.Obstacles;
 
-public class EnemyVehicle(Seeker seeker) : Vehicle
+public class EnemyVehicle(SeekerVehicle seeker) : Vehicle
 {
-    readonly SeekerVehicle seeker = seeker.Vehicle;
+    public SeekerVehicle Seeker { get; set; } = seeker;
 
     public void Update(float elapsedTime, IEnumerable<IObstacle> obstacles)
     {
         // determine upper bound for pursuit prediction time
-        var seekerToGoalDist = NVector3.Distance(Globals.HomeBaseCenter, seeker.Position);
+        var seekerToGoalDist = NVector3.Distance(Globals.HomeBaseCenter, Seeker.Position);
         var adjustedDistance = seekerToGoalDist - Radius - Globals.BaseRadius;
-        var seekerToGoalTime = adjustedDistance < 0 ? 0 : adjustedDistance / seeker.Speed;
+        var seekerToGoalTime = adjustedDistance < 0 ? 0 : adjustedDistance / Seeker.Speed;
         var maxPredictionTime = seekerToGoalTime * 0.9f;
 
         // determine steering (pursuit, obstacle avoidance, or braking)
         var steer = NVector3.Zero;
-        if (seeker.State is SeekerState.Running)
+        if (Seeker.State is SeekerState.Running)
         {
             var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, obstacles);
 
             // saved for annotation
             avoiding = avoidance == NVector3.Zero;
 
-            steer = avoiding ? SteerForPursuit(seeker, maxPredictionTime) : avoidance;
+            steer = avoiding ? SteerForPursuit(Seeker, maxPredictionTime) : avoidance;
         }
         else
             ApplyBrakingForce(Globals.BrakingRate, elapsedTime);
@@ -29,16 +29,16 @@ public class EnemyVehicle(Seeker seeker) : Vehicle
         ApplySteeringForce(steer, elapsedTime);
 
         // detect and record interceptions ("tags") of seeker
-        var seekerToMeDist = NVector3.Distance(Position, seeker.Position);
-        var sumOfRadii = Radius + seeker.Radius;
+        var seekerToMeDist = NVector3.Distance(Position, Seeker.Position);
+        var sumOfRadii = Radius + Seeker.Radius;
 
         if (seekerToMeDist >= sumOfRadii)
             return;
 
-        switch (seeker.State)
+        switch (Seeker.State)
         {
             case SeekerState.Running:
-                seeker.State = SeekerState.Tagged;
+                Seeker.State = SeekerState.Tagged;
                 break;
 
             case SeekerState.Tagged:

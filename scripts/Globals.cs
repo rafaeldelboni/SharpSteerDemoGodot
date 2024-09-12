@@ -1,4 +1,5 @@
 global using Godot;
+global using System;
 global using System.Linq;
 global using System.Collections.Generic;
 global using NVector3 = System.Numerics.Vector3;

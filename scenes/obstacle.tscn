@@ -7,8 +7,10 @@
 material = ExtResource("2_ndt6w")
 height = 0.1
 
-[node name="Obstacle" type="Node3D" groups=["obstacle"]]
+[node name="Obstacle" type="Node3D" node_paths=PackedStringArray("mesh") groups=["obstacle"]]
 script = ExtResource("1_jr1ue")
+mesh = NodePath("MeshInstance3D")
+material = ExtResource("2_ndt6w")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("CylinderMesh_nrj4h")

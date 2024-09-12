@@ -3,9 +3,11 @@ using SharpSteer2.Obstacles;
 
 public partial class ObstacleSpawner : Node
 {
-    PackedScene obstacleScene;
+    [Export] PackedScene obstacleScene;
     [Export] int numObstacles = 100;
     [Export] float baseRadius = .10f;
+
+    public static ObstacleSpawner Instance { get; private set; }
 
     readonly List<Obstacle> obstacleNodes = [];
     readonly List<IObstacle> obstacleList = [];
@@ -13,11 +15,9 @@ public partial class ObstacleSpawner : Node
 
     int ObstacleCount => obstacleNodes.Count;
 
-    public static ObstacleSpawner Instance { get; private set; }
-
     public override void _Ready()
     {
-        obstacleScene = GD.Load<PackedScene>("res://scenes/obstacle.tscn");
+        ArgumentNullException.ThrowIfNull(obstacleScene);
 
         InitializeObstacles();
 
@@ -80,13 +80,13 @@ public partial class ObstacleSpawner : Node
     {
         obstacleNodes.Add(obstacle);
         AddChild(obstacle);
-        obstacleList.Add(obstacle.SphericalObstacle);
+        obstacleList.Add(obstacle.Body);
     }
 
     void RemoveObstacle(Obstacle obstacle)
     {
         obstacleNodes.Remove(obstacle);
-        obstacleList.Remove(obstacle.SphericalObstacle);
+        obstacleList.Remove(obstacle.Body);
         RemoveChild(obstacle);
         obstacle.QueueFree();
     }

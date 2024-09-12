@@ -1,10 +1,8 @@
 public partial class EnemySpawner : Node
 {
-    const int NumEnemies = 6;
-
-    PackedScene enemyScene;
-    Seeker seeker;
-    ObstacleSpawner obstacleSpawner;
+    [Export] int numEnemies = 6;
+    [Export] PackedScene enemyScene;
+    [Export] Seeker seeker;
 
     public Enemy[] AllEnemies = [];
 
@@ -12,14 +10,10 @@ public partial class EnemySpawner : Node
 
     public override void _Ready()
     {
-        enemyScene = GD.Load<PackedScene>("res://scenes/enemy.tscn");
-        seeker = GetNode<Seeker>("%Seeker");
-        obstacleSpawner = ObstacleSpawner.Instance;
+        ArgumentNullException.ThrowIfNull(seeker);
+        ArgumentNullException.ThrowIfNull(enemyScene);
 
         InitializeEnemies();
-
-        foreach (var enemy in AllEnemies)
-            AddChild(enemy);
 
         if (Instance != this) Instance?.QueueFree();
         Instance = this;
@@ -27,8 +21,15 @@ public partial class EnemySpawner : Node
 
     void InitializeEnemies()
     {
-        AllEnemies = new Enemy[NumEnemies];
+        AllEnemies = new Enemy[numEnemies];
+        this.FreeChildren();
+
         for (var i = 0; i < AllEnemies.Length; i++)
-            AllEnemies[i] = enemyScene.Instantiate<Enemy>().Configure(seeker);
+        {
+            var enemy = enemyScene.Instantiate<Enemy>();
+            enemy.Seek(seeker);
+            AllEnemies[i] = enemy;
+            AddChild(enemy);
+        }
     }
 }

@@ -1,18 +1,20 @@
 public partial class Enemy : Node3D
 {
-    public EnemyVehicle Vehicle;
+    public EnemyVehicle Vehicle { get; private set; }
 
     Seeker seeker;
 
-    public Enemy Configure(Seeker seeker)
+    public void Seek(Seeker seeker)
     {
         this.seeker = seeker;
-        return this;
+
+        if (Vehicle is not null)
+            Vehicle.Seeker = seeker.Vehicle;
     }
 
     public override void _Ready()
     {
-        Vehicle = new(seeker);
+        Vehicle = new(seeker.Vehicle);
         Vehicle.Reset();
         Vehicle.RandomizeStartingPositionAndHeading(ObstacleSpawner.Instance);
         Position = Vehicle.Position.ToGodot();
@@ -26,7 +28,13 @@ public partial class Enemy : Node3D
         );
 
         Position = Vehicle.Position.ToGodot();
-        var yaw = Mathf.Lerp(Rotation.Y, Mathf.Atan2(-Vehicle.Velocity.X, -Vehicle.Velocity.Z), weight: 0.5f);
-        Rotation = new(0, yaw, 0);
+
+        var yaw = Mathf.Lerp(
+            Rotation.Y,
+            Mathf.Atan2(-Vehicle.Velocity.X, -Vehicle.Velocity.Z),
+            weight: 0.5f
+        );
+
+        Rotation = yaw * Vector3.Up;
     }
 }
