@@ -1,22 +1,14 @@
 using System.Linq;
 using Vector3 = System.Numerics.Vector3;
 
-public class EnemyVehicle : Vehicle
+public class EnemyVehicle(
+    Seeker seeker,
+    ObstacleSpawner obstacleSpawner
+) : Vehicle(obstacleSpawner)
 {
-    SeekerVehicle seeker;
+    readonly SeekerVehicle seeker = seeker.vehicle;
 
-    public EnemyVehicle(Seeker seeker, ObstacleSpawner obstacleSpawner) : base(obstacleSpawner)
-    {
-        this.seeker = seeker.vehicle;
-        Reset();
-    }
-
-    public override void Reset()
-    {
-        base.Reset();
-    }
-
-    public void Update(float currentTime, float elapsedTime)
+    public void Update(float elapsedTime)
     {
         // determine upper bound for pursuit prediction time
         var seekerToGoalDist = Vector3.Distance(Globals.HomeBaseCenter, seeker.Position);
@@ -28,8 +20,8 @@ public class EnemyVehicle : Vehicle
         var steer = Vector3.Zero;
         if (seeker.State == SeekerState.Running)
         {
-            var AllObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
-            var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, AllObstacles);
+            var allObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
+            var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, allObstacles);
 
             // saved for annotation
             avoiding = avoidance == Vector3.Zero;
@@ -37,24 +29,26 @@ public class EnemyVehicle : Vehicle
             steer = avoiding ? SteerForPursuit(seeker, maxPredictionTime) : avoidance;
         }
         else
-        {
             ApplyBrakingForce(Globals.BrakingRate, elapsedTime);
-        }
 
         ApplySteeringForce(steer, elapsedTime);
 
         // detect and record interceptions ("tags") of seeker
         var seekerToMeDist = Vector3.Distance(Position, seeker.Position);
         var sumOfRadii = Radius + seeker.Radius;
-        if (seekerToMeDist < sumOfRadii)
-        {
-            if (seeker.State == SeekerState.Running) seeker.State = SeekerState.Tagged;
 
-            // annotation:
-            if (seeker.State == SeekerState.Tagged)
-            {
+        if (seekerToMeDist >= sumOfRadii)
+            return;
+
+        switch (seeker.State)
+        {
+            case SeekerState.Running:
+                seeker.State = SeekerState.Tagged;
+                break;
+
+            case SeekerState.Tagged:
                 Godot.GD.Print("Seeker Tagged!");
-            }
+                break;
         }
     }
 }

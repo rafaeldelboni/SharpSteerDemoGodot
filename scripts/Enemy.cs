@@ -2,7 +2,8 @@ using Godot;
 
 public partial class Enemy : Node3D
 {
-    public EnemyVehicle vehicle;
+    public EnemyVehicle Vehicle;
+
     Seeker seeker;
     ObstacleSpawner obstacleSpawner;
 
@@ -16,18 +17,18 @@ public partial class Enemy : Node3D
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        vehicle = new(seeker, obstacleSpawner);
-        vehicle.Reset();
-        vehicle.RandomizeStartingPositionAndHeading();
-        Position = vehicle.Position.ToGodot();
+        Vehicle = new(seeker, obstacleSpawner);
+        Vehicle.Reset();
+        Vehicle.RandomizeStartingPositionAndHeading();
+        Position = Vehicle.Position.ToGodot();
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        vehicle.Update((float)delta, (float)delta);
+        Vehicle.Update((float)delta);
 
-        Position = vehicle.Position.ToGodot();
-        Rotation = new(0, Mathf.Lerp(Rotation.Y, Mathf.Atan2(-vehicle.Velocity.X, -vehicle.Velocity.Z), weight: 0.5f), 0);
+        Position = Vehicle.Position.ToGodot();
+        Rotation = new(0, Mathf.Lerp(Rotation.Y, Mathf.Atan2(-Vehicle.Velocity.X, -Vehicle.Velocity.Z), weight: 0.5f), 0);
     }
 }

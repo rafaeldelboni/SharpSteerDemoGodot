@@ -2,13 +2,13 @@ using Godot;
 
 public partial class EnemySpawner : Node
 {
-    static int numEnemies = 6;
+    const int NumEnemies = 6;
 
-    static PackedScene enemyScene;
-    static Seeker seeker;
-    static ObstacleSpawner obstacleSpawner;
+    PackedScene enemyScene;
+    Seeker seeker;
+    ObstacleSpawner obstacleSpawner;
 
-    public Enemy[] allEnemies;
+    public Enemy[] AllEnemies = [];
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -17,18 +17,18 @@ public partial class EnemySpawner : Node
         seeker = GetNode<Seeker>("%Seeker");
         obstacleSpawner = GetNode<ObstacleSpawner>("%ObstacleSpawner");
 
-        InitializeEnemies(numEnemies);
+        InitializeEnemies(NumEnemies);
 
-        foreach (var enemy in allEnemies)
+        foreach (var enemy in AllEnemies)
             AddChild(enemy);
     }
 
     public void InitializeEnemies(int enemyCount)
     {
-        allEnemies = new Enemy[enemyCount];
-        for (var i = 0; i < allEnemies.Length; i++)
+        AllEnemies = new Enemy[enemyCount];
+        for (var i = 0; i < AllEnemies.Length; i++)
         {
-            allEnemies[i] = enemyScene.Instantiate<Enemy>().Init(seeker, obstacleSpawner);
+            AllEnemies[i] = enemyScene.Instantiate<Enemy>().Init(seeker, obstacleSpawner);
         }
     }
 }

@@ -6,29 +6,22 @@ public enum SeekerState
 {
     Running,
     Tagged,
-    AtGoal
+    AtGoal,
 }
 
-public class SeekerVehicle : Vehicle
+public class SeekerVehicle(
+    EnemySpawner enemySpawner,
+    ObstacleSpawner obstacleSpawner
+) : Vehicle(obstacleSpawner)
 {
-    readonly bool arrive;
-    public SeekerState State;
-    bool evading; // xxx store steer sub-state for anotation
+    readonly bool arrive = false; // TODO: not being used 🤔
+    public SeekerState State = SeekerState.Running;
     float lastRunningTime; // for auto-reset
-
-    EnemySpawner enemySpawner;
-
-    public SeekerVehicle(EnemySpawner enemySpawner, ObstacleSpawner obstacleSpawner) : base(obstacleSpawner)
-    {
-        this.enemySpawner = enemySpawner;
-        Reset();
-    }
 
     public override void Reset()
     {
         base.Reset();
         State = SeekerState.Running;
-        evading = false;
     }
 
     // per frame simulation update
@@ -39,14 +32,10 @@ public class SeekerVehicle : Vehicle
 
         // determine and apply steering/braking forces
         var steer = Vector3.Zero;
-        if (State == SeekerState.Running)
-        {
+        if (State is SeekerState.Running)
             steer = SteeringForSeeker();
-        }
         else
-        {
             ApplyBrakingForce(Globals.BrakingRate, elapsedTime);
-        }
 
         ApplySteeringForce(steer, elapsedTime);
     }
@@ -67,7 +56,7 @@ public class SeekerVehicle : Vehicle
         var xxxReturn = true;
 
         // loop over enemies
-        foreach (var e in enemySpawner.allEnemies.Select(e => e.vehicle))
+        foreach (var e in enemySpawner.AllEnemies.Select(e => e.Vehicle))
         {
             var eDistance = Vector3.Distance(Position, e.Position);
             var timeEstimate = 0.3f * eDistance / e.Speed; //xxx
@@ -165,13 +154,14 @@ public class SeekerVehicle : Vehicle
             }
         }
     }
+
     public Vector3 SteerToEvadeAllDefenders()
     {
         var evade = Vector3.Zero;
         var goalDistance = Vector3.Distance(Globals.HomeBaseCenter, Position);
 
         // sum up weighted evasion
-        foreach (var e in enemySpawner.allEnemies.Select(e => e.vehicle))
+        foreach (var e in enemySpawner.AllEnemies.Select(e => e.Vehicle))
         {
             var eOffset = e.Position - Position;
             var eDistance = eOffset.Length();
@@ -202,7 +192,7 @@ public class SeekerVehicle : Vehicle
     {
         // sum up weighted evasion
         var evade = Vector3.Zero;
-        foreach (var e in enemySpawner.allEnemies.Select(e => e.vehicle))
+        foreach (var e in enemySpawner.AllEnemies.Select(e => e.Vehicle))
         {
             var eOffset = e.Position - Position;
             var eDistance = eOffset.Length();
@@ -232,7 +222,6 @@ public class SeekerVehicle : Vehicle
     {
         if (clearPath)
         {
-            evading = false;
             var goalDistance = Vector3.Distance(Globals.HomeBaseCenter, Position);
             var headingTowardGoal = this.IsAhead(Globals.HomeBaseCenter, 0.98f);
             var isNear = goalDistance / Speed < Globals.AvoidancePredictTimeMax;
@@ -241,7 +230,6 @@ public class SeekerVehicle : Vehicle
         }
         else
         {
-            evading = true;
             Globals.AvoidancePredictTime = Globals.AvoidancePredictTimeMin;
         }
     }
