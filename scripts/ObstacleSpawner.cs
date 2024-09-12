@@ -8,85 +8,81 @@ public partial class ObstacleSpawner : Node
     PackedScene obstacleScene;
 
     float baseRadius = 1.5f;
+
     readonly List<Obstacle> obstacleNodes = [];
     public IEnumerable<IObstacle> AllObstacles => obstacleNodes.Select(o => o.SphericalObstacle);
 
-    int obstacleCount = -1;
+    int ObstacleCount => obstacleNodes.Count;
 
     public static ObstacleSpawner Instance { get; private set; }
 
-    // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
         obstacleScene = GD.Load<PackedScene>("res://scenes/obstacle.tscn");
 
         InitializeObstacles(0.10f);
 
-        foreach (var obstacles in obstacleNodes)
-            AddChild(obstacles);
-
-        if (Instance != this)
-            Instance?.QueueFree();
-
+        if (Instance != this) Instance?.QueueFree();
         Instance = this;
     }
 
     // dynamic obstacle registry
-    public void InitializeObstacles(float radius)
+    void InitializeObstacles(float radius)
     {
         obstacleNodes.Clear();
-
-        // start with 40% of possible obstacles
-        if (obstacleCount is not -1)
-            return;
-
-        obstacleCount = 0;
+        this.FreeChildren();
 
         for (var i = 0; i < NumObstacles; i++)
-            AddOneObstacle(radius);
+            AddObstacle(radius);
     }
 
-    void AddOneObstacle(float radius)
+    void AddObstacle(float radius)
     {
         // pick a random center and radius,
         // loop until no overlap with other obstacles and the home base
-        float r;
-        Vector3 c;
+        float randomRadius;
+        Vector3 randomCenter;
         float minClearance;
+
         // todo use player radius
-        var requiredClearance = 0.5f * 4; // 2 x diameter
+        const float requiredClearance = 0.5f * 4; // 2 x diameter
+
         do
         {
-            r = RandomHelpers.Random(1.5f, 4);
-            c = Vector3Helpers.RandomVectorOnUnitRadiusXZDisk().ToGodot() * Globals.MaxStartRadius * 1.1f;
-            minClearance = obstacleNodes.Aggregate(float.MaxValue,
-                (current, t) => TestOneObstacleOverlap(current, r + t.Radius, c, t.Position));
+            randomRadius = RandomHelpers.Random(1.5f, 4);
+            randomCenter = Vector3Helpers.RandomVectorOnUnitRadiusXZDisk().ToGodot() * Globals.MaxStartRadius * 1.1f;
 
-            minClearance = TestOneObstacleOverlap(minClearance, r + radius - requiredClearance, c,
-                Globals.HomeBaseCenter.ToGodot());
+            minClearance = TestOneObstacleOverlap(
+                MinDistanceToObstacle(randomCenter, randomRadius),
+                randomRadius + radius - requiredClearance,
+                randomCenter,
+                Globals.HomeBaseCenter.ToGodot()
+            );
         } while (minClearance < requiredClearance);
 
         // add new non-overlapping obstacle to registry
-        var obstacle = obstacleScene.Instantiate<Obstacle>();
-        obstacle.Radius = r;
-        obstacle.Position = c;
+        var obstacle = obstacleScene.Instantiate<Obstacle>().Configure(
+            radius: randomRadius,
+            position: randomCenter
+        );
+
         obstacleNodes.Add(obstacle);
-        obstacleCount++;
+        AddChild(obstacle);
     }
 
-    void RemoveOneObstacle()
+    void RemoveLastObstacle()
     {
-        if (obstacleCount <= 0)
-            return;
-
-        obstacleCount--;
-        obstacleNodes.RemoveAt(obstacleCount);
+        if (ObstacleCount <= 0) return;
+        var obstacle = obstacleNodes[^1];
+        RemoveChild(obstacle);
+        obstacle.QueueFree();
+        obstacleNodes.Remove(obstacle);
     }
 
-    public float MinDistanceToObstacle(Vector3 point) =>
+    public float MinDistanceToObstacle(Vector3 point, float radius = 0) =>
         obstacleNodes.Aggregate(
             float.MaxValue,
-            (current, t) => TestOneObstacleOverlap(current, t.Radius, point, t.Position));
+            (current, t) => TestOneObstacleOverlap(current, t.Radius + radius, point, t.Position));
 
     static float TestOneObstacleOverlap(float minClearance, float radius, Vector3 source, Vector3 target)
     {

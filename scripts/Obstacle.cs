@@ -7,6 +7,13 @@ public partial class Obstacle : Node3D
 
     MeshInstance3D mesh;
 
+    public Obstacle Configure(float radius, Vector3 position)
+    {
+        Radius = radius;
+        Position = position;
+        return this;
+    }
+
     public override void _Ready()
     {
         CylinderMesh cylinder = new()

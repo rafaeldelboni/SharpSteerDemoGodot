@@ -1,6 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://cx4rny3qjk7u0"]
+[gd_scene load_steps=14 format=3 uid="uid://cx4rny3qjk7u0"]
 
 [ext_resource type="PackedScene" uid="uid://d3kuvk88vismj" path="res://scenes/seeker.tscn" id="1_1e4d1"]
+[ext_resource type="Script" path="res://scripts/MainScene.cs" id="1_c2gob"]
 [ext_resource type="Script" path="res://scripts/ObstacleSpawner.cs" id="2_4mgtw"]
 [ext_resource type="Script" path="res://scripts/EnemySpawner.cs" id="2_j7r1q"]
 [ext_resource type="Texture2D" uid="uid://vn5xnuqswxan" path="res://assets/texture/Dark/texture_05.png" id="3_5xn15"]
@@ -37,6 +38,7 @@ material = SubResource("StandardMaterial3D_tuk5b")
 size = Vector2(100, 100)
 
 [node name="Ctf" type="Node3D"]
+script = ExtResource("1_c2gob")
 
 [node name="ObstacleSpawner" type="Node" parent="."]
 unique_name_in_owner = true

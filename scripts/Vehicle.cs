@@ -8,13 +8,7 @@ public abstract class Vehicle : SimpleVehicle
 
     protected bool avoiding;
 
-    protected readonly ObstacleSpawner obstacleSpawner;
-
-    protected Vehicle(ObstacleSpawner obstacleSpawner)
-    {
-        this.obstacleSpawner = obstacleSpawner;
-        LocalReset();
-    }
+    protected Vehicle() => LocalReset();
 
     void LocalReset()
     {
@@ -29,7 +23,7 @@ public abstract class Vehicle : SimpleVehicle
         LocalReset();
     }
 
-    public void RandomizeStartingPositionAndHeading()
+    public void RandomizeStartingPositionAndHeading(ObstacleSpawner obstacleSpawner)
     {
         // randomize position on a ring between inner and outer radii
         // centered around the home base
@@ -41,7 +35,7 @@ public abstract class Vehicle : SimpleVehicle
         if (obstacleSpawner.MinDistanceToObstacle(Position.ToGodot()) < Radius * 5)
             // if so, retry the randomization (this recursive call may not return
             // if there is too little free space)
-            RandomizeStartingPositionAndHeading();
+            RandomizeStartingPositionAndHeading(obstacleSpawner);
         else
             // otherwise, if the position is OK, randomize 2D heading
             RandomizeHeadingOnXZPlane();
