@@ -32,7 +32,7 @@ public abstract class Vehicle : SimpleVehicle
         Position = Globals.HomeBaseCenter + randomOnRing;
 
         // are we are too close to an obstacle?
-        if (obstacleSpawner.MinDistanceToObstacle(Position.ToGodot()) < Radius * 5)
+        if (obstacleSpawner.MinDistanceToPoint(Position.ToGodot()) < Radius * 5)
             // if so, retry the randomization (this recursive call may not return
             // if there is too little free space)
             RandomizeStartingPositionAndHeading(obstacleSpawner);

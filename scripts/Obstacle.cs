@@ -29,4 +29,21 @@ public partial class Obstacle : Node3D
 
         SphericalObstacle = new(Radius, Position.ToNumerics());
     }
+
+    public float GetClearance(Vector3 point, float extraRadius = 0)
+    {
+        var distance = point.DistanceTo(Position);
+        return distance - (extraRadius + SphericalObstacle.Radius);
+    }
+
+   public static float TestOneObstacleOverlap(float minClearance, float radius, Vector3 source, Vector3 target)
+    {
+        var clearance = source.DistanceTo(target) - radius;
+
+        if (minClearance > clearance)
+            minClearance = clearance;
+
+        return minClearance;
+    }
+
 }

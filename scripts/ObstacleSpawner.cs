@@ -3,14 +3,13 @@ using SharpSteer2.Obstacles;
 
 public partial class ObstacleSpawner : Node
 {
-    const int NumObstacles = 100;
-
     PackedScene obstacleScene;
-
-    float baseRadius = 1.5f;
+    [Export] int numObstacles = 100;
+    [Export] float baseRadius = .10f;
 
     readonly List<Obstacle> obstacleNodes = [];
-    public IEnumerable<IObstacle> AllObstacles => obstacleNodes.Select(o => o.SphericalObstacle);
+    readonly List<IObstacle> obstacleList = [];
+    public IReadOnlyList<IObstacle> AllObstacles => obstacleList;
 
     int ObstacleCount => obstacleNodes.Count;
 
@@ -20,44 +19,52 @@ public partial class ObstacleSpawner : Node
     {
         obstacleScene = GD.Load<PackedScene>("res://scenes/obstacle.tscn");
 
-        InitializeObstacles(0.10f);
+        InitializeObstacles();
 
         if (Instance != this) Instance?.QueueFree();
         Instance = this;
     }
 
     // dynamic obstacle registry
-    void InitializeObstacles(float radius)
+    void InitializeObstacles()
     {
-        obstacleNodes.Clear();
-        this.FreeChildren();
+        Clear();
 
-        for (var i = 0; i < NumObstacles; i++)
-            AddObstacle(radius);
+        for (var i = 0; i < numObstacles; i++)
+            AddObstacle(GenerateObstacle());
     }
 
-    void AddObstacle(float radius)
+    void Clear()
     {
+        obstacleNodes.Clear();
+        obstacleList.Clear();
+        this.FreeChildren();
+    }
+
+    Obstacle GenerateObstacle()
+    {
+        // todo use player radius
+        const float requiredClearance = 0.5f * 4; // 2 x diameter
+
+        var homeCenter = Globals.HomeBaseCenter.ToGodot();
+        var radius = baseRadius - requiredClearance;
+
         // pick a random center and radius,
         // loop until no overlap with other obstacles and the home base
         float randomRadius;
         Vector3 randomCenter;
         float minClearance;
 
-        // todo use player radius
-        const float requiredClearance = 0.5f * 4; // 2 x diameter
-
         do
         {
             randomRadius = RandomHelpers.Random(1.5f, 4);
             randomCenter = Vector3Helpers.RandomVectorOnUnitRadiusXZDisk().ToGodot() * Globals.MaxStartRadius * 1.1f;
 
-            minClearance = TestOneObstacleOverlap(
-                MinDistanceToObstacle(randomCenter, randomRadius),
-                randomRadius + radius - requiredClearance,
-                randomCenter,
-                Globals.HomeBaseCenter.ToGodot()
-            );
+            minClearance =
+                Mathf.Min(
+                    MinDistanceToPoint(randomCenter, randomRadius),
+                    randomCenter.DistanceTo(homeCenter) - randomRadius + radius
+                );
         } while (minClearance < requiredClearance);
 
         // add new non-overlapping obstacle to registry
@@ -66,32 +73,30 @@ public partial class ObstacleSpawner : Node
             position: randomCenter
         );
 
+        return obstacle;
+    }
+
+    void AddObstacle(Obstacle obstacle)
+    {
         obstacleNodes.Add(obstacle);
         AddChild(obstacle);
+        obstacleList.Add(obstacle.SphericalObstacle);
     }
 
-    void RemoveLastObstacle()
+    void RemoveObstacle(Obstacle obstacle)
     {
-        if (ObstacleCount <= 0) return;
-        var obstacle = obstacleNodes[^1];
+        obstacleNodes.Remove(obstacle);
+        obstacleList.Remove(obstacle.SphericalObstacle);
         RemoveChild(obstacle);
         obstacle.QueueFree();
-        obstacleNodes.Remove(obstacle);
     }
 
-    public float MinDistanceToObstacle(Vector3 point, float radius = 0) =>
-        obstacleNodes.Aggregate(
-            float.MaxValue,
-            (current, t) => TestOneObstacleOverlap(current, t.Radius + radius, point, t.Position));
-
-    static float TestOneObstacleOverlap(float minClearance, float radius, Vector3 source, Vector3 target)
+    public void RemoveLastObstacle()
     {
-        var distance = source.DistanceTo(target);
-        var clearance = distance - radius;
-
-        if (minClearance > clearance)
-            minClearance = clearance;
-
-        return minClearance;
+        if (ObstacleCount <= 0) return;
+        RemoveObstacle(obstacleNodes[^1]);
     }
+
+    public float MinDistanceToPoint(Vector3 point, float radius = 0) =>
+        obstacleNodes.Min(t => t?.GetClearance(point, radius)) ?? float.MaxValue;
 }
