@@ -36,14 +36,4 @@ public partial class Obstacle : Node3D
         var distance = point.DistanceTo(Position);
         return distance - (extraRadius + Body.Radius);
     }
-
-    public static float TestOneObstacleOverlap(float minClearance, float radius, Vector3 source, Vector3 target)
-    {
-        var clearance = source.DistanceTo(target) - radius;
-
-        if (minClearance > clearance)
-            minClearance = clearance;
-
-        return minClearance;
-    }
 }

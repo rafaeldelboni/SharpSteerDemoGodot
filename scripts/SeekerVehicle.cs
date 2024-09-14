@@ -91,8 +91,6 @@ public class SeekerVehicle : Vehicle
                 }
             }
         }
-
-        ClearPathAnnotation(sideThreshold, behindThreshold, goalDirection);
         return xxxReturn;
     }
 
@@ -238,15 +236,5 @@ public class SeekerVehicle : Vehicle
         }
         else
             Globals.UseMinPredictTime();
-    }
-
-    // TODO: not doing anything
-    void ClearPathAnnotation(float sideThreshold, float behindThreshold, NVector3 goalDirection)
-    {
-        // var behindBack = Forward * -behindThreshold;
-        // var pbb = Position + behindBack;
-        // var gun = this.LocalRotateForwardToSide(goalDirection);
-        // var gn = gun * sideThreshold;
-        // var hbc = Globals.HomeBaseCenter;
     }
 }

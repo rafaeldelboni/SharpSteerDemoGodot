@@ -5,7 +5,7 @@ public partial class ObstacleSpawner : Node
 {
     [Export] PackedScene obstacleScene;
     [Export] int numObstacles = 100;
-    [Export] float baseRadius = .10f;
+    [Export] float baseRadius = 1.50f;
 
     public static ObstacleSpawner Instance { get; private set; }
 
@@ -57,7 +57,7 @@ public partial class ObstacleSpawner : Node
 
         do
         {
-            randomRadius = RandomHelpers.Random(1.5f, 4);
+            randomRadius = RandomHelpers.Random(baseRadius, 4);
             randomCenter = Vector3Helpers.RandomVectorOnUnitRadiusXZDisk().ToGodot() * Globals.MaxStartRadius * 1.1f;
 
             minClearance =
