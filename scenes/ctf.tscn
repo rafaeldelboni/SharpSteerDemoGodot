@@ -1,10 +1,13 @@
-[gd_scene load_steps=13 format=3 uid="uid://cx4rny3qjk7u0"]
+[gd_scene load_steps=16 format=3 uid="uid://cx4rny3qjk7u0"]
 
 [ext_resource type="PackedScene" uid="uid://d3kuvk88vismj" path="res://scenes/seeker.tscn" id="1_1e4d1"]
+[ext_resource type="Script" path="res://scripts/MainScene.cs" id="1_c2gob"]
 [ext_resource type="Script" path="res://scripts/ObstacleSpawner.cs" id="2_4mgtw"]
 [ext_resource type="Script" path="res://scripts/EnemySpawner.cs" id="2_j7r1q"]
 [ext_resource type="Texture2D" uid="uid://vn5xnuqswxan" path="res://assets/texture/Dark/texture_05.png" id="3_5xn15"]
+[ext_resource type="PackedScene" uid="uid://dmgrv0fl6k005" path="res://scenes/obstacle.tscn" id="3_f1ohp"]
 [ext_resource type="Texture2D" uid="uid://b1moqjcvkhcgg" path="res://assets/texture/Green/texture_10.png" id="3_tjouf"]
+[ext_resource type="PackedScene" uid="uid://d4kvp60qlajml" path="res://scenes/enemy.tscn" id="8_whvxt"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1agcr"]
 
@@ -37,10 +40,12 @@ material = SubResource("StandardMaterial3D_tuk5b")
 size = Vector2(100, 100)
 
 [node name="Ctf" type="Node3D"]
+script = ExtResource("1_c2gob")
 
 [node name="ObstacleSpawner" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("2_4mgtw")
+obstacleScene = ExtResource("3_f1ohp")
 
 [node name="Map" type="Node" parent="."]
 
@@ -68,6 +73,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 40)
 [node name="Camera3D" type="Camera3D" parent="Seeker"]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 25, 15)
 
-[node name="EnemySpawner" type="Node" parent="."]
+[node name="EnemySpawner" type="Node" parent="." node_paths=PackedStringArray("seeker")]
 unique_name_in_owner = true
 script = ExtResource("2_j7r1q")
+enemyScene = ExtResource("8_whvxt")
+seeker = NodePath("../Seeker")

@@ -1,33 +1,40 @@
-using Godot;
-
 public partial class Enemy : Node3D
 {
-    public EnemyVehicle vehicle;
-    Seeker seeker;
-    ObstacleSpawner obstacleSpawner;
+    public EnemyVehicle Vehicle { get; private set; }
 
-    public Enemy Init(Seeker seeker, ObstacleSpawner obstacleSpawner)
+    Seeker seeker;
+
+    public void Seek(Seeker seeker)
     {
         this.seeker = seeker;
-        this.obstacleSpawner = obstacleSpawner;
-        return this;
+
+        if (Vehicle is not null)
+            Vehicle.Seeker = seeker.Vehicle;
     }
 
-    // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        vehicle = new(seeker, obstacleSpawner);
-        vehicle.Reset();
-        vehicle.RandomizeStartingPositionAndHeading();
-        Position = vehicle.Position.ToGodot();
+        Vehicle = new(seeker.Vehicle);
+        Vehicle.Reset();
+        Vehicle.RandomizeStartingPositionAndHeading(ObstacleSpawner.Instance);
+        Position = Vehicle.Position.ToGodot();
     }
 
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        vehicle.Update((float)delta, (float)delta);
+        Vehicle.Update(
+            (float)delta,
+            ObstacleSpawner.Instance.AllObstacles
+        );
 
-        Position = vehicle.Position.ToGodot();
-        Rotation = new(0, Mathf.Lerp(Rotation.Y, Mathf.Atan2(-vehicle.Velocity.X, -vehicle.Velocity.Z), weight: 0.5f), 0);
+        Position = Vehicle.Position.ToGodot();
+
+        var yaw = Mathf.Lerp(
+            Rotation.Y,
+            Mathf.Atan2(-Vehicle.Velocity.X, -Vehicle.Velocity.Z),
+            weight: 0.5f
+        );
+
+        Rotation = yaw * Vector3.Up;
     }
 }

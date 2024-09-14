@@ -1,23 +1,49 @@
-using Godot;
 using SharpSteer2.Obstacles;
 
 public partial class Obstacle : Node3D
 {
-    [Export] public float Radius;
-    public SphericalObstacle sphericalObstacle;
+    [Export] MeshInstance3D mesh;
+    [Export] Material material;
 
-    MeshInstance3D mesh;
+    public SphericalObstacle Body { get; private set; }
+
+
+    public Obstacle Configure(float radius, Vector3 position)
+    {
+        Position = position;
+        Body = new(radius, position.ToNumerics());
+        return this;
+    }
 
     public override void _Ready()
     {
-        var material = GD.Load<Material>($"res://assets/material/obstacle_material.tres");
-        mesh = GetNode<MeshInstance3D>("MeshInstance3D");
-        var cylinder = new CylinderMesh();
-        cylinder.Height = 0.1f;
-        cylinder.TopRadius = Radius;
-        cylinder.BottomRadius = Radius;
+        ArgumentNullException.ThrowIfNull(mesh);
+        ArgumentNullException.ThrowIfNull(material);
+
+        CylinderMesh cylinder = new()
+        {
+            Height = 0.1f,
+            TopRadius = Body.Radius,
+            BottomRadius = Body.Radius,
+        };
+
         mesh.Mesh = cylinder;
         mesh.MaterialOverride = material;
-        sphericalObstacle = new(Radius, Position.ToNumerics());
+    }
+
+    public float GetClearance(Vector3 point, float extraRadius = 0)
+    {
+        var distance = point.DistanceTo(Position);
+        return distance - (extraRadius + Body.Radius);
+    }
+
+    public static float TestOneObstacleOverlap(float minClearance, float radius, Vector3 source, Vector3 target)
+    {
+        var clearance = source.DistanceTo(target) - radius;
+
+        if (minClearance > clearance)
+            minClearance = clearance;
+
+        return minClearance;
     }
 }

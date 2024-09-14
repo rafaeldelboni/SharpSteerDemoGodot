@@ -1,60 +1,49 @@
-using System.Linq;
-using Vector3 = System.Numerics.Vector3;
+using SharpSteer2.Obstacles;
 
-public class EnemyVehicle : Vehicle
+public class EnemyVehicle(SeekerVehicle seeker) : Vehicle
 {
-    SeekerVehicle seeker;
+    public SeekerVehicle Seeker { get; set; } = seeker;
 
-    public EnemyVehicle(Seeker seeker, ObstacleSpawner obstacleSpawner) : base(obstacleSpawner)
-    {
-        this.seeker = seeker.vehicle;
-        Reset();
-    }
-
-    public override void Reset()
-    {
-        base.Reset();
-    }
-
-    public void Update(float currentTime, float elapsedTime)
+    public void Update(float elapsedTime, IEnumerable<IObstacle> obstacles)
     {
         // determine upper bound for pursuit prediction time
-        var seekerToGoalDist = Vector3.Distance(Globals.HomeBaseCenter, seeker.Position);
+        var seekerToGoalDist = NVector3.Distance(Globals.HomeBaseCenter, Seeker.Position);
         var adjustedDistance = seekerToGoalDist - Radius - Globals.BaseRadius;
-        var seekerToGoalTime = adjustedDistance < 0 ? 0 : adjustedDistance / seeker.Speed;
+        var seekerToGoalTime = adjustedDistance < 0 ? 0 : adjustedDistance / Seeker.Speed;
         var maxPredictionTime = seekerToGoalTime * 0.9f;
 
         // determine steering (pursuit, obstacle avoidance, or braking)
-        var steer = Vector3.Zero;
-        if (seeker.State == SeekerState.Running)
+        var steer = NVector3.Zero;
+        if (Seeker.State is SeekerState.Running)
         {
-            var AllObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
-            var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, AllObstacles);
+            var avoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTimeMin, obstacles);
 
             // saved for annotation
-            avoiding = avoidance == Vector3.Zero;
+            avoiding = avoidance == NVector3.Zero;
 
-            steer = avoiding ? SteerForPursuit(seeker, maxPredictionTime) : avoidance;
+            steer = avoiding ? SteerForPursuit(Seeker, maxPredictionTime) : avoidance;
         }
         else
-        {
             ApplyBrakingForce(Globals.BrakingRate, elapsedTime);
-        }
 
         ApplySteeringForce(steer, elapsedTime);
 
         // detect and record interceptions ("tags") of seeker
-        var seekerToMeDist = Vector3.Distance(Position, seeker.Position);
-        var sumOfRadii = Radius + seeker.Radius;
-        if (seekerToMeDist < sumOfRadii)
-        {
-            if (seeker.State == SeekerState.Running) seeker.State = SeekerState.Tagged;
+        var seekerToMeDist = NVector3.Distance(Position, Seeker.Position);
+        var sumOfRadii = Radius + Seeker.Radius;
 
-            // annotation:
-            if (seeker.State == SeekerState.Tagged)
-            {
-                Godot.GD.Print("Seeker Tagged!");
-            }
+        if (seekerToMeDist >= sumOfRadii)
+            return;
+
+        switch (Seeker.State)
+        {
+            case SeekerState.Running:
+                Seeker.State = SeekerState.Tagged;
+                break;
+
+            case SeekerState.Tagged:
+                GD.Print("Seeker Tagged!");
+                break;
         }
     }
 }

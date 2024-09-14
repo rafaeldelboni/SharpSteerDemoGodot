@@ -1,58 +1,50 @@
-using System.Linq;
 using SharpSteer2.Helpers;
-using Vector3 = System.Numerics.Vector3;
+using SharpSteer2.Obstacles;
 
 public enum SeekerState
 {
     Running,
     Tagged,
-    AtGoal
+    AtGoal,
 }
 
 public class SeekerVehicle : Vehicle
 {
-    readonly bool arrive;
-    public SeekerState State;
-    bool evading; // xxx store steer sub-state for anotation
+    const float ResetDelay = 4;
+
     float lastRunningTime; // for auto-reset
-
-    EnemySpawner enemySpawner;
-
-    public SeekerVehicle(EnemySpawner enemySpawner, ObstacleSpawner obstacleSpawner) : base(obstacleSpawner)
-    {
-        this.enemySpawner = enemySpawner;
-        Reset();
-    }
+    public SeekerState State = SeekerState.Running;
+    bool arrive = false; // TODO: not being used 🤔
 
     public override void Reset()
     {
         base.Reset();
         State = SeekerState.Running;
-        evading = false;
     }
 
     // per frame simulation update
-    public void Update(float currentTime, float elapsedTime)
+    public void Update(
+        float currentTime,
+        float elapsedTime,
+        IEnumerable<IObstacle> obstacles,
+        Enemy[] enemies
+    )
     {
         // do behavioral state transitions, as needed
         UpdateState(currentTime);
 
         // determine and apply steering/braking forces
-        var steer = Vector3.Zero;
-        if (State == SeekerState.Running)
-        {
-            steer = SteeringForSeeker();
-        }
+        var steer = NVector3.Zero;
+        if (State is SeekerState.Running)
+            steer = SteeringForSeeker(enemies, obstacles);
         else
-        {
             ApplyBrakingForce(Globals.BrakingRate, elapsedTime);
-        }
 
         ApplySteeringForce(steer, elapsedTime);
     }
 
     // is there a clear path to the goal?
-    bool IsPathToGoalClear()
+    bool IsPathToGoalClear(Enemy[] enemies)
     {
         var sideThreshold = Radius * 8.0f;
         var behindThreshold = Radius * 2.0f;
@@ -67,15 +59,16 @@ public class SeekerVehicle : Vehicle
         var xxxReturn = true;
 
         // loop over enemies
-        foreach (var e in enemySpawner.allEnemies.Select(e => e.vehicle))
+        foreach (var enemy in enemies)
         {
-            var eDistance = Vector3.Distance(Position, e.Position);
-            var timeEstimate = 0.3f * eDistance / e.Speed; //xxx
-            var eFuture = e.PredictFuturePosition(timeEstimate);
+            var vehicle = enemy.Vehicle;
+            var eDistance = NVector3.Distance(Position, vehicle.Position);
+            var timeEstimate = 0.3f * eDistance / vehicle.Speed; //xxx
+            var eFuture = vehicle.PredictFuturePosition(timeEstimate);
             var eOffset = eFuture - Position;
-            var alongCorridor = Vector3.Dot(goalDirection, eOffset);
+            var alongCorridor = NVector3.Dot(goalDirection, eOffset);
             var inCorridor = alongCorridor > -behindThreshold && alongCorridor < goalDistance;
-            var eForwardDistance = Vector3.Dot(Forward, eOffset);
+            var eForwardDistance = NVector3.Dot(Forward, eOffset);
 
             // consider as potential blocker if within the corridor
             if (inCorridor)
@@ -85,7 +78,7 @@ public class SeekerVehicle : Vehicle
                 if (acrossCorridor < sideThreshold)
                 {
                     // not a blocker if behind us and we are perp to corridor
-                    var eFront = eForwardDistance + e.Radius;
+                    var eFront = eForwardDistance + vehicle.Radius;
 
                     var eIsBehind = eFront < -behindThreshold;
                     var eIsWayBehind = eFront < -2 * behindThreshold;
@@ -103,16 +96,18 @@ public class SeekerVehicle : Vehicle
         return xxxReturn;
     }
 
-    Vector3 SteeringForSeeker()
+    NVector3 SteeringForSeeker(Enemy[] enemies, IEnumerable<IObstacle> obstacles)
     {
-        // determine if obstacle avodiance is needed
-        var clearPath = IsPathToGoalClear();
+        // determine if obstacle avoidance is needed
+        var clearPath = IsPathToGoalClear(enemies);
         AdjustObstacleAvoidanceLookAhead(clearPath);
-        var AllObstacles = obstacleSpawner.allObstacles.Select(o => o.sphericalObstacle);
-        var obstacleAvoidance = SteerToAvoidObstacles(Globals.AvoidancePredictTime, AllObstacles);
+        var obstacleAvoidance = SteerToAvoidObstacles(
+            Globals.AvoidancePredictTime,
+            obstacles
+        );
 
         // saved for annotation
-        avoiding = obstacleAvoidance != Vector3.Zero;
+        avoiding = obstacleAvoidance != NVector3.Zero;
 
         if (avoiding)
         {
@@ -128,11 +123,11 @@ public class SeekerVehicle : Vehicle
         if (clearPath)
         {
             // we have a clear path (defender-free corridor), use pure seek
-            Godot.GD.Print("Seeker has clear path.");
+            GD.Print("Seeker has clear path.");
             return seek;
         }
 
-        var evade = XxxSteerToEvadeAllDefenders();
+        var evade = XxxSteerToEvadeAllDefenders(enemies);
         var steer = (seek + evade).LimitMaxDeviationAngle(0.707f, Forward);
 
         return steer;
@@ -143,78 +138,77 @@ public class SeekerVehicle : Vehicle
         // if we reach the goal before being tagged, switch to atGoal state
         if (State == SeekerState.Running)
         {
-            var baseDistance = Vector3.Distance(Position, Globals.HomeBaseCenter);
+            var baseDistance = NVector3.Distance(Position, Globals.HomeBaseCenter);
             if (baseDistance < Radius + Globals.BaseRadius)
             {
-                Godot.GD.Print("Seeker At Goal!");
+                GD.Print("Seeker At Goal!");
                 State = SeekerState.AtGoal;
             }
         }
 
-        if (State == SeekerState.Running)
+        if (State is SeekerState.Running)
         {
             lastRunningTime = currentTime;
         }
         else
         {
-            const float resetDelay = 4;
-            var resetTime = lastRunningTime + resetDelay;
+            var resetTime = lastRunningTime + ResetDelay;
             if (currentTime > resetTime)
-            {
-                Godot.GD.Print("Out of time.");
-            }
+                GD.Print("Out of time.");
         }
     }
-    public Vector3 SteerToEvadeAllDefenders()
+
+    // TODO: not being called
+    public NVector3 SteerToEvadeAllDefenders(Enemy[] enemies)
     {
-        var evade = Vector3.Zero;
-        var goalDistance = Vector3.Distance(Globals.HomeBaseCenter, Position);
+        var evade = NVector3.Zero;
+        var goalDistance = NVector3.Distance(Globals.HomeBaseCenter, Position);
 
         // sum up weighted evasion
-        foreach (var e in enemySpawner.allEnemies.Select(e => e.vehicle))
+        foreach (var enemy in enemies)
         {
-            var eOffset = e.Position - Position;
+            var vehicle = enemy.Vehicle;
+            var eOffset = vehicle.Position - Position;
             var eDistance = eOffset.Length();
 
-            var eForwardDistance = Vector3.Dot(Forward, eOffset);
+            var eForwardDistance = NVector3.Dot(Forward, eOffset);
             var behindThreshold = Radius * 2;
             var behind = eForwardDistance < behindThreshold;
-            if (!behind || eDistance < 5)
-            {
-                if (eDistance < goalDistance * 1.2) //xxx
-                {
-                    var timeEstimate = 0.15f * eDistance / e.Speed; //xxx
-                    var future = e.PredictFuturePosition(timeEstimate);
 
-                    var offset = future - Position;
-                    var lateral = Vector3Helpers.PerpendicularComponent(offset, Forward);
-                    var d = lateral.Length();
-                    var weight = -1000 / (d * d);
-                    evade += lateral / d * weight;
-                }
-            }
+            if (behind && eDistance >= 5) continue;
+            if (eDistance >= goalDistance * 1.2) continue;
+
+            var timeEstimate = 0.15f * eDistance / vehicle.Speed;
+            var future = vehicle.PredictFuturePosition(timeEstimate);
+
+            var offset = future - Position;
+            var lateral = Vector3Helpers.PerpendicularComponent(offset, Forward);
+            var d = lateral.Length();
+            var weight = -1000 / (d * d);
+            evade += lateral / d * weight;
         }
 
         return evade;
     }
 
-    Vector3 XxxSteerToEvadeAllDefenders()
+    NVector3 XxxSteerToEvadeAllDefenders(Enemy[] enemies)
     {
         // sum up weighted evasion
-        var evade = Vector3.Zero;
-        foreach (var e in enemySpawner.allEnemies.Select(e => e.vehicle))
+        var evade = NVector3.Zero;
+        foreach (var enemy in enemies)
         {
-            var eOffset = e.Position - Position;
+            var vehicle = enemy.Vehicle;
+            var eOffset = vehicle.Position - Position;
             var eDistance = eOffset.Length();
 
             // xxx maybe this should take into account e's heading? xxx
-            var timeEstimate = 0.5f * eDistance / e.Speed; //xxx
-            var eFuture = e.PredictFuturePosition(timeEstimate);
+            var timeEstimate = 0.5f * eDistance / vehicle.Speed; //xxx
+            var eFuture = vehicle.PredictFuturePosition(timeEstimate);
 
             // steering to flee from eFuture (enemy's future position)
             var flee = SteerForFlee(eFuture);
 
-            var eForwardDistance = Vector3.Dot(Forward, eOffset);
+            var eForwardDistance = NVector3.Dot(Forward, eOffset);
             var behindThreshold = Radius * -2;
 
             var distanceWeight = 4 / eDistance;
@@ -232,26 +226,27 @@ public class SeekerVehicle : Vehicle
     {
         if (clearPath)
         {
-            evading = false;
-            var goalDistance = Vector3.Distance(Globals.HomeBaseCenter, Position);
+            var goalDistance = NVector3.Distance(Globals.HomeBaseCenter, Position);
             var headingTowardGoal = this.IsAhead(Globals.HomeBaseCenter, 0.98f);
             var isNear = goalDistance / Speed < Globals.AvoidancePredictTimeMax;
             var useMax = headingTowardGoal && !isNear;
-            Globals.AvoidancePredictTime = useMax ? Globals.AvoidancePredictTimeMax : Globals.AvoidancePredictTimeMin;
+
+            if (useMax)
+                Globals.UseMaxPredictTime();
+            else
+                Globals.UseMinPredictTime();
         }
         else
-        {
-            evading = true;
-            Globals.AvoidancePredictTime = Globals.AvoidancePredictTimeMin;
-        }
+            Globals.UseMinPredictTime();
     }
 
-    void ClearPathAnnotation(float sideThreshold, float behindThreshold, Vector3 goalDirection)
+    // TODO: not doing anything
+    void ClearPathAnnotation(float sideThreshold, float behindThreshold, NVector3 goalDirection)
     {
-        var behindBack = Forward * -behindThreshold;
-        var pbb = Position + behindBack;
-        var gun = this.LocalRotateForwardToSide(goalDirection);
-        var gn = gun * sideThreshold;
-        var hbc = Globals.HomeBaseCenter;
+        // var behindBack = Forward * -behindThreshold;
+        // var pbb = Position + behindBack;
+        // var gun = this.LocalRotateForwardToSide(goalDirection);
+        // var gn = gun * sideThreshold;
+        // var hbc = Globals.HomeBaseCenter;
     }
 }
